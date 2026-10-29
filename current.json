@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "device_gid": 466964,
+  "timezone": "America/Los_Angeles",
+  "interval_minutes": 5,
+  "measurement_start": "2026-10-29T13:43:00-07:00",
+  "measurement_end": "2026-10-29T13:48:00-07:00",
+  "published_at": "2026-10-29T13:49:33.577276-07:00",
+  "unit": "W",
+  "channels": {
+    "97": {
+      "name": "AC",
+      "watts": 0.0,
+      "interval_kwh": 0.0
+    },
+    "98": {
+      "name": "solar",
+      "watts": -2928.48,
+      "interval_kwh": -0.24404
+    },
+    "99": {
+      "name": "EV",
+      "watts": 0.0,
+      "interval_kwh": 0.0
+    },
+    "100": {
+      "name": "Zone A",
+      "watts": 180.3,
+      "interval_kwh": 0.015025
+    },
+    "101": {
+      "name": "Zone B",
+      "watts": 343.98,
+      "interval_kwh": 0.028665
+    }
+  }
+}
