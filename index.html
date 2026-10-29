@@ -466,6 +466,125 @@ refreshHistory();
 setInterval(refreshHistory, 300000);
 
 </script>
+
+<section id="flume-water" style="margin:24px 0">
+  <style>
+    #flume-water .water-panel {
+      background:var(--card, #1d2732);
+      color:var(--text, #f5f7fa);
+      border-radius:16px;
+      padding:24px;
+    }
+    #flume-water .water-stats {
+      display:flex;
+      flex-wrap:wrap;
+      gap:32px;
+      margin:20px 0;
+    }
+    #flume-water .water-value {
+      font-size:32px;
+      font-weight:700;
+      font-variant-numeric:tabular-nums;
+    }
+    #flume-water .water-label {
+      font-size:13px;
+      opacity:.7;
+    }
+    #flume-water .water-chart {
+      display:flex;
+      align-items:end;
+      gap:3px;
+      height:180px;
+      padding:12px 0 0;
+      border-bottom:1px solid #8886;
+    }
+    #flume-water .water-bar {
+      flex:1;
+      min-width:0;
+      background:#38bdf8;
+      border-radius:3px 3px 0 0;
+    }
+    #flume-water .water-axis {
+      display:flex;
+      justify-content:space-between;
+      font-size:12px;
+      opacity:.65;
+      margin-top:8px;
+    }
+  </style>
+
+  <div class="water-panel">
+    <h2>Water Usage</h2>
+    <div class="water-stats">
+      <div>
+        <div class="water-label">Today</div>
+        <div class="water-value" id="water-today">—</div>
+        <div class="water-label">Gallons</div>
+      </div>
+      <div>
+        <div class="water-label">Latest hour</div>
+        <div class="water-value" id="water-latest">—</div>
+        <div class="water-label">Gallons</div>
+      </div>
+    </div>
+    <h3>Hourly water usage · Last 24 hours</h3>
+    <div class="water-chart" id="water-chart"></div>
+    <div class="water-axis">
+      <span>24 hours ago</span>
+      <span>Now</span>
+    </div>
+    <p id="water-status" style="font-size:12px;opacity:.7">
+      Loading Flume data…
+    </p>
+  </div>
+</section>
+
+<script>
+async function refreshFlumeWater() {
+  const status = document.getElementById("water-status");
+  try {
+    const response = await fetch(
+      "water.json?t=" + Date.now(),
+      {cache:"no-store"}
+    );
+    if (!response.ok) throw new Error("HTTP " + response.status);
+
+    const water = await response.json();
+    const hours = water.hourly || [];
+
+    document.getElementById("water-today").textContent =
+      Number(water.today_gallons).toFixed(2);
+
+    const latest = hours.length ? hours[hours.length - 1] : null;
+    document.getElementById("water-latest").textContent =
+      latest ? Number(latest.gallons).toFixed(2) : "—";
+
+    const chart = document.getElementById("water-chart");
+    chart.replaceChildren();
+
+    const max = Math.max(1, ...hours.map(h => Number(h.gallons)));
+
+    for (const hour of hours) {
+      const gallons = Number(hour.gallons);
+      const bar = document.createElement("div");
+      bar.className = "water-bar";
+      bar.style.height = (gallons / max * 100) + "%";
+      bar.title = hour.time + ": " + gallons.toFixed(2) + " gal";
+      chart.appendChild(bar);
+    }
+
+    status.textContent =
+      "Flume · Updated " +
+      new Date(water.published_at).toLocaleTimeString();
+  } catch (error) {
+    status.textContent = "Water data unavailable: " + error.message;
+  }
+}
+
+refreshFlumeWater();
+setInterval(refreshFlumeWater, 300000);
+</script>
+
 </body>
 </html>
 
