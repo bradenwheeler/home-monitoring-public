@@ -121,6 +121,24 @@ footer { margin-top: 28px; color: #98a2b3;
 
 </head>
 <body>
+<div id="usage-24h-summary" style="
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:16px;
+  margin:20px;
+">
+  <div class="card" style="padding:24px">
+    <h3>Water · Last 24 hours</h3>
+    <div id="summary-water" style="font-size:36px;font-weight:bold">—</div>
+    <small id="summary-water-note">Loading…</small>
+  </div>
+  <div class="card" style="padding:24px">
+    <h3>Net electricity · Last 24 hours</h3>
+    <div id="summary-electricity" style="font-size:36px;font-weight:bold">—</div>
+    <small id="summary-electricity-note">Loading…</small>
+  </div>
+</div>
+
 <main>
   <header>
     <div>
@@ -623,6 +641,65 @@ async function refreshFlumeWater() {
 
 refreshFlumeWater();
 setInterval(refreshFlumeWater, 300000);
+</script>
+
+
+<script>
+async function refresh24hSummary() {
+  const now = Date.now();
+  const cutoff = now - 86400000;
+
+  try {
+    const r = await fetch("water.json?t=" + now);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const data = await r.json();
+    const hours = (data.hourly || [])
+      .sort((a,b) => a.time.localeCompare(b.time))
+      .slice(-24);
+    const gallons = hours.reduce(
+      (sum,h) => sum + Number(h.gallons || 0), 0
+    );
+    document.getElementById("summary-water").textContent =
+      gallons.toFixed(1) + " gal";
+    document.getElementById("summary-water-note").textContent =
+      "Approximate 24-hour total";
+  } catch(e) {
+    document.getElementById("summary-water-note").textContent = e.message;
+  }
+
+  try {
+    const r = await fetch("history.json?t=" + now);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const points = (await r.json())
+      .map(p => ({t:Date.parse(p.time), w:Number(p.net_grid_watts)}))
+      .filter(p => Number.isFinite(p.t) &&
+                   Number.isFinite(p.w) && p.t >= cutoff)
+      .sort((a,b) => a.t-b.t);
+
+    if (points.length < 2 ||
+        points[points.length-1].t - points[0].t < 23*3600000) {
+      document.getElementById("summary-electricity-note").textContent =
+        "Collecting 24 hours of history…";
+      return;
+    }
+
+    let kwh = 0;
+    for(let i=1;i<points.length;i++) {
+      const hours = (points[i].t-points[i-1].t)/3600000;
+      if(hours > 0 && hours <= .25)
+        kwh += (points[i].w+points[i-1].w)/2*hours/1000;
+    }
+
+    document.getElementById("summary-electricity").textContent =
+      kwh.toFixed(2) + " kWh";
+    document.getElementById("summary-electricity-note").textContent =
+      "Estimated grid import minus export";
+  } catch(e) {
+    document.getElementById("summary-electricity-note").textContent = e.message;
+  }
+}
+refresh24hSummary();
+setInterval(refresh24hSummary, 300000);
 </script>
 
 </body>
