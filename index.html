@@ -1,0 +1,254 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Home Energy</title>
+<style>
+:root {
+  font-family: -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  color-scheme: dark;
+  background: #101319;
+  color: #f4f6f9;
+}
+* { box-sizing: border-box; }
+body { margin: 0; padding: 28px 18px; }
+main { max-width: 900px; margin: auto; }
+header, .between {
+  display: flex; justify-content: space-between;
+  align-items: center; gap: 12px;
+}
+h1 { font-size: 26px; margin: 0; }
+h2 { font-size: 17px; margin: 0 0 18px; }
+small, .muted { color: #98a2b3; }
+.card {
+  background: #1c222c;
+  border: 1px solid #303846;
+  border-radius: 16px;
+  padding: 22px;
+}
+.hero { margin: 24px 0 14px; padding: 30px; }
+.label {
+  color: #aeb8c6; font-size: 12px;
+  letter-spacing: .08em; text-transform: uppercase;
+}
+.big { font-size: clamp(38px, 8vw, 64px);
+  font-weight: 700; margin: 12px 0 5px; }
+.value { font-size: 30px; font-weight: 650;
+  margin-top: 12px; }
+.green { color: #65e3ae; }
+.orange { color: #ffbf72; }
+.grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.section { margin-top: 28px; }
+.circuit { padding: 14px 0;
+  border-bottom: 1px solid #303846; }
+.circuit:last-child { border: 0; }
+.bar { background: #303846; height: 6px;
+  border-radius: 10px; margin-top: 12px; overflow: hidden; }
+.fill { background: #7dafff; height: 100%; }
+.pill { background: #303846; border-radius: 30px;
+  padding: 8px 12px; font-size: 12px; }
+#error { color: #ffbf72; margin-top: 12px; }
+footer { margin-top: 28px; color: #98a2b3;
+  font-size: 12px; }
+@media(max-width: 540px) {
+  .grid { grid-template-columns: 1fr; }
+  .hero { padding: 22px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Home Energy</h1>
+      <small>Emporia Vue 3</small>
+    </div>
+    <span class="pill" id="status">Loading…</span>
+  </header>
+
+  <section class="card hero">
+    <div class="label">Net grid power</div>
+    <div class="big" id="net">—</div>
+    <div id="direction" class="muted">Loading measurements…</div>
+  </section>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">Solar generation</div>
+      <div class="value" id="solar">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Whole-home consumption</div>
+      <div class="value" id="home">—</div>
+    </div>
+  </div>
+
+  <section class="section card">
+    <h2>Five-minute circuit averages</h2>
+    <div id="circuits">Loading…</div>
+    <small id="measurement"></small>
+  </section>
+
+  <section class="section card">
+    <h2>Previous day's energy</h2>
+    <div id="daily">Loading…</div>
+  </section>
+
+  <div id="error" role="status"></div>
+  <footer id="updated">Refreshes automatically every 5 minutes</footer>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function power(watts) {
+  if (!Number.isFinite(Number(watts))) return "—";
+  const n = Number(watts);
+  return Math.abs(n) >= 1000
+    ? (n / 1000).toFixed(2) + " kW"
+    : n.toFixed(0) + " W";
+}
+
+function energy(kwh) {
+  const n = Number(kwh);
+  return Number.isFinite(n) ? n.toFixed(2) + " kWh" : "—";
+}
+
+function addRow(parent, label, value, percent) {
+  const row = document.createElement("div");
+  row.className = "circuit";
+
+  const top = document.createElement("div");
+  top.className = "between";
+
+  const name = document.createElement("span");
+  name.textContent = label;
+
+  const amount = document.createElement("strong");
+  amount.textContent = value;
+
+  top.append(name, amount);
+  row.append(top);
+
+  if (percent !== undefined) {
+    const bar = document.createElement("div");
+    bar.className = "bar";
+    const fill = document.createElement("div");
+    fill.className = "fill";
+    fill.style.width = Math.max(0, Math.min(100, percent)) + "%";
+    bar.append(fill);
+    row.append(bar);
+  }
+
+  parent.append(row);
+}
+
+async function getJSON(file) {
+  const response = await fetch(file + "?t=" + Date.now(),
+    {cache: "no-store"});
+  if (!response.ok) throw new Error(file + ": HTTP " + response.status);
+  return response.json();
+}
+
+async function refresh() {
+  const errors = [];
+
+  try {
+    const data = await getJSON("current.json");
+    const grid = data.grid || {};
+    const net = Number(grid.net_grid_watts);
+
+    $("net").textContent = power(net);
+    $("direction").textContent =
+      !Number.isFinite(net) ? "Grid data unavailable" :
+      net < 0 ? "Exporting electricity to the grid" :
+      net > 0 ? "Importing electricity from the grid" :
+      "Grid import and export balanced";
+
+    $("direction").className =
+      net < 0 ? "green" : net > 0 ? "orange" : "muted";
+
+    $("solar").textContent = power(grid.solar_generation_watts);
+    $("home").textContent = power(grid.home_consumption_watts);
+
+    const channels = Object.values(data.channels || {});
+    const container = $("circuits");
+    container.replaceChildren();
+
+    const max = Math.max(1, ...channels.map(
+      c => Math.abs(Number(c.watts) || 0)
+    ));
+
+    channels.forEach(c => addRow(
+      container,
+      c.name || "Channel",
+      power(c.watts),
+      Math.abs(Number(c.watts) || 0) / max * 100
+    ));
+
+    const time = data.measurement_end || data.published_at;
+    $("measurement").textContent = time
+      ? "Five-minute interval ending " + new Date(time).toLocaleString()
+      : "";
+
+    const age = Date.now() - Date.parse(data.published_at);
+    $("status").textContent =
+      Number.isFinite(age) && age >= 0 && age < 15 * 60000
+      ? "● Updated recently" : "● Data may be stale";
+
+    $("updated").textContent =
+      "Last published: " +
+      (data.published_at
+        ? new Date(data.published_at).toLocaleString()
+        : "Unknown") +
+      " · Refreshes every 5 minutes";
+
+  } catch (e) {
+    errors.push(e.message);
+    $("status").textContent = "Data unavailable";
+  }
+
+  try {
+    const daily = await getJSON("daily.json");
+    const container = $("daily");
+    container.replaceChildren();
+
+    // Accept either a channels object or a totals object.
+    const source = daily.channels || daily.totals || {};
+    const entries = Array.isArray(source)
+      ? source.map((v, i) => [String(i + 1), v])
+      : Object.entries(source);
+
+    if (!entries.length) {
+      container.textContent =
+        "Daily data is available, but its format needs mapping.";
+    } else {
+      entries.forEach(([key, item]) => {
+        const name = typeof item === "object" && item
+          ? (item.name || key) : key;
+        const value = typeof item === "object" && item
+          ? (item.kwh ?? item.total_kwh ?? item.value)
+          : item;
+        addRow(container, name, energy(value));
+      });
+    }
+  } catch (e) {
+    errors.push(e.message);
+    $("daily").textContent = "Daily totals unavailable";
+  }
+
+  $("error").textContent = errors.join(" · ");
+}
+
+refresh();
+setInterval(refresh, 300000);
+</script>
+</body>
+</html>
+
