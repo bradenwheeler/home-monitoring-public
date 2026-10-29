@@ -99,6 +99,26 @@ footer { margin-top: 28px; color: #98a2b3;
 }
 </style>
 
+
+<style>
+#usage-comparison {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin: 24px 0;
+}
+#usage-comparison > section {
+  min-width: 0;
+  margin: 0 !important;
+}
+@media (min-width: 900px) {
+  #usage-comparison {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+</style>
+
 </head>
 <body>
 <main>
@@ -139,6 +159,7 @@ footer { margin-top: 28px; color: #98a2b3;
   </section>
 
   
+<div id="usage-comparison">
 <section class="section card" id="energy-charts">
   <div class="between">
     <h2>Energy history</h2>
@@ -163,6 +184,78 @@ footer { margin-top: 28px; color: #98a2b3;
   </div>
   <small id="history-info">Loading history…</small>
 </section>
+<section id="flume-water" style="margin:24px 0">
+  <style>
+    #flume-water .water-panel {
+      background:var(--card, #1d2732);
+      color:var(--text, #f5f7fa);
+      border-radius:16px;
+      padding:24px;
+    }
+    #flume-water .water-stats {
+      display:flex;
+      flex-wrap:wrap;
+      gap:32px;
+      margin:20px 0;
+    }
+    #flume-water .water-value {
+      font-size:32px;
+      font-weight:700;
+      font-variant-numeric:tabular-nums;
+    }
+    #flume-water .water-label {
+      font-size:13px;
+      opacity:.7;
+    }
+    #flume-water .water-chart {
+      display:flex;
+      align-items:end;
+      gap:3px;
+      height:180px;
+      padding:12px 0 0;
+      border-bottom:1px solid #8886;
+    }
+    #flume-water .water-bar {
+      flex:1;
+      min-width:0;
+      background:#38bdf8;
+      border-radius:3px 3px 0 0;
+    }
+    #flume-water .water-axis {
+      display:flex;
+      justify-content:space-between;
+      font-size:12px;
+      opacity:.65;
+      margin-top:8px;
+    }
+  </style>
+
+  <div class="water-panel">
+    <h2>Water Usage</h2>
+    <div class="water-stats">
+      <div>
+        <div class="water-label">Today</div>
+        <div class="water-value" id="water-today">—</div>
+        <div class="water-label">Gallons</div>
+      </div>
+      <div>
+        <div class="water-label">Latest hour</div>
+        <div class="water-value" id="water-latest">—</div>
+        <div class="water-label">Gallons</div>
+      </div>
+    </div>
+    <h3>Hourly water usage · Last 24 hours</h3>
+    <div class="water-chart" id="water-chart"></div>
+    <div class="water-axis">
+      <span>24 hours ago</span>
+      <span>Now</span>
+    </div>
+    <p id="water-status" style="font-size:12px;opacity:.7">
+      Loading Flume data…
+    </p>
+  </div>
+</section>
+</div>
 
 <div id="error" role="status"></div>
   <footer id="updated">Refreshes automatically every 5 minutes</footer>
@@ -484,77 +577,7 @@ setInterval(refreshHistory, 300000);
 
 </script>
 
-<section id="flume-water" style="margin:24px 0">
-  <style>
-    #flume-water .water-panel {
-      background:var(--card, #1d2732);
-      color:var(--text, #f5f7fa);
-      border-radius:16px;
-      padding:24px;
-    }
-    #flume-water .water-stats {
-      display:flex;
-      flex-wrap:wrap;
-      gap:32px;
-      margin:20px 0;
-    }
-    #flume-water .water-value {
-      font-size:32px;
-      font-weight:700;
-      font-variant-numeric:tabular-nums;
-    }
-    #flume-water .water-label {
-      font-size:13px;
-      opacity:.7;
-    }
-    #flume-water .water-chart {
-      display:flex;
-      align-items:end;
-      gap:3px;
-      height:180px;
-      padding:12px 0 0;
-      border-bottom:1px solid #8886;
-    }
-    #flume-water .water-bar {
-      flex:1;
-      min-width:0;
-      background:#38bdf8;
-      border-radius:3px 3px 0 0;
-    }
-    #flume-water .water-axis {
-      display:flex;
-      justify-content:space-between;
-      font-size:12px;
-      opacity:.65;
-      margin-top:8px;
-    }
-  </style>
 
-  <div class="water-panel">
-    <h2>Water Usage</h2>
-    <div class="water-stats">
-      <div>
-        <div class="water-label">Today</div>
-        <div class="water-value" id="water-today">—</div>
-        <div class="water-label">Gallons</div>
-      </div>
-      <div>
-        <div class="water-label">Latest hour</div>
-        <div class="water-value" id="water-latest">—</div>
-        <div class="water-label">Gallons</div>
-      </div>
-    </div>
-    <h3>Hourly water usage · Last 24 hours</h3>
-    <div class="water-chart" id="water-chart"></div>
-    <div class="water-axis">
-      <span>24 hours ago</span>
-      <span>Now</span>
-    </div>
-    <p id="water-status" style="font-size:12px;opacity:.7">
-      Loading Flume data…
-    </p>
-  </div>
-</section>
 
 <script>
 async function refreshFlumeWater() {
