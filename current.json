@@ -5,7 +5,7 @@
   "interval_minutes": 5,
   "measurement_start": "2026-10-29T14:06:00-07:00",
   "measurement_end": "2026-10-29T14:11:00-07:00",
-  "published_at": "2026-10-29T14:12:07.469383-07:00",
+  "published_at": "2026-10-29T14:12:48.139484-07:00",
   "unit": "W",
   "channels": {
     "97": {
@@ -36,7 +36,7 @@
   },
   "grid": {
     "interval_minutes": 1,
-    "measured_at": "2026-10-29T14:12:07.469360-07:00",
+    "measured_at": "2026-10-29T14:12:48.139451-07:00",
     "net_grid_watts": -2082.78,
     "solar_generation_watts": 2528.99,
     "home_consumption_watts": 446.21,
