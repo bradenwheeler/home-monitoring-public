@@ -738,33 +738,56 @@ async function refresh24hSummary() {
   }
 
   try {
-    const r = await fetch("history.json?t=" + now);
+    const r = await fetch("current.json?t=" + now);
     if (!r.ok) throw new Error("HTTP " + r.status);
-    const points = (await r.json())
-      .map(p => ({t:Date.parse(p.time), w:Number(p.net_grid_watts)}))
-      .filter(p => Number.isFinite(p.t) &&
-                   Number.isFinite(p.w) && p.t >= cutoff)
-      .sort((a,b) => a.t-b.t);
 
-    if (points.length < 2 ||
-        points[points.length-1].t - points[0].t < 23*3600000) {
-      document.getElementById("summary-electricity-note").textContent =
-        "Collecting 24 hours of history…";
-      return;
+    const data = await r.json();
+    const energy = data.last_24h;
+    const value = energy?.net_grid_kwh;
+
+    if (
+      energy?.status !== "complete" ||
+      typeof value !== "number" ||
+      !Number.isFinite(value) ||
+      !energy.start ||
+      !energy.end
+    ) {
+      throw new Error("Measured 24-hour energy unavailable");
     }
 
-    let kwh = 0;
-    for(let i=1;i<points.length;i++) {
-      const hours = (points[i].t-points[i-1].t)/3600000;
-      if(hours > 0 && hours <= .25)
-        kwh += (points[i].w+points[i-1].w)/2*hours/1000;
+    const startTime = Date.parse(energy.start);
+    const endTime = Date.parse(energy.end);
+
+    if (
+      !Number.isFinite(startTime) ||
+      !Number.isFinite(endTime) ||
+      Math.abs(endTime - startTime - 86400000) > 1000 ||
+      Date.now() - endTime > 2 * 3600000 ||
+      endTime > Date.now()
+    ) {
+      throw new Error("24-hour energy data is incomplete or stale");
     }
 
-    document.getElementById("summary-electricity").textContent =
-      kwh.toFixed(2) + " kWh";
-    document.getElementById("summary-electricity-note").textContent =
-      "Estimated grid import minus export";
+    const el = document.getElementById("summary-electricity");
+    const note = document.getElementById("summary-electricity-note");
+
+    el.textContent = (value > 0 ? "+" : "") +
+      value.toFixed(2) + " kWh";
+
+    const endLabel = new Date(endTime).toLocaleString("en-US", {
+      timeZone: "America/Los_Angeles",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
+    });
+
+    note.textContent =
+      (value < 0 ? "Net exported" :
+       value > 0 ? "Net imported" : "Balanced") +
+      " · 24 completed hours ending " + endLabel;
   } catch(e) {
+    document.getElementById("summary-electricity").textContent = "—";
     document.getElementById("summary-electricity-note").textContent = e.message;
   }
 }
