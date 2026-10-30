@@ -77,10 +77,10 @@
     </section>
 
     <section class="card">
-      <div class="eyebrow">HOME ELECTRICITY</div>
+      <div class="eyebrow">NET GRID ELECTRICITY</div>
       <div class="total"><span id="electric-total">—</span>
         <span class="unit">kWh</span></div>
-      <div class="detail">Gross consumption · Last 24h</div>
+      <div class="detail">After solar production · Last 24h</div>
     </section>
   </div>
 
@@ -124,11 +124,13 @@ async function electricity() {
     const data = await json("current.json");
     const period = data.last_24h || {};
     const value = period.home_consumption_kwh;
+    const netGrid = period.net_grid_kwh;
     const start = Date.parse(period.start);
     const end = Date.parse(period.end);
 
     if (period.status !== "complete" ||
         !Number.isFinite(value) || value < 0 ||
+        !Number.isFinite(netGrid) ||
         !Number.isFinite(start) || !Number.isFinite(end) ||
         Math.abs(end-start-86400000) > 60000 ||
         end > Date.now()+60000 ||
@@ -136,7 +138,7 @@ async function electricity() {
       throw Error("Incomplete 24-hour data");
     }
 
-    $("electric-total").textContent = value.toFixed(1);
+    $("electric-total").textContent = netGrid.toFixed(1);
     setScore("electric-score",
       score(value, [[10,100],[25,50],[50,0]]));
     $("electric-status").textContent = "Provisional";
