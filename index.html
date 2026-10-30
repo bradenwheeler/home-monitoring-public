@@ -162,19 +162,6 @@ footer { margin-top: 28px; color: #98a2b3;
   <h2 style="margin:8px 0">Home efficiency · Last 24 hours</h2>
   <p style="opacity:.7">Provisional scores while we build your personalized baseline.</p>
 
-  <div style="display:flex;justify-content:space-between;
-              font-size:13px;margin:20px 0 8px">
-    <span>Baseline progress</span>
-    <span id="baseline-days">Calculating…</span>
-  </div>
-
-  <div style="height:9px;background:#8883;border-radius:9px;
-              overflow:hidden">
-    <div id="baseline-progress" style="
-      width:0%;height:100%;background:#4e8fbe;
-      transition:width .3s"></div>
-  </div>
-
   <div style="display:grid;
               grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
               gap:14px;margin-top:20px">
@@ -931,6 +918,33 @@ async function updateEfficiencyScores() {
 updateEfficiencyScores();
 setInterval(updateEfficiencyScores, 300000);
 </script>
+
+
+<section id="baseline-footer" style="
+  margin:20px;
+  padding:24px;
+  border:1px solid #8884;
+  border-radius:16px;
+  background:var(--card, #1d2732);
+  color:var(--text, #f5f7fa);
+">
+  <div style="font-size:13px;opacity:.7">PERSONALIZED EFFICIENCY</div>
+  <h3 style="margin:8px 0">Building your baseline</h3>
+  <div style="display:flex;justify-content:space-between;
+              font-size:13px;margin:20px 0 8px">
+    <span>Baseline progress</span>
+    <span id="baseline-days">Calculating…</span>
+  </div>
+
+  <div style="height:9px;background:#8883;border-radius:9px;
+              overflow:hidden">
+    <div id="baseline-progress" style="
+      width:0%;height:100%;background:#4e8fbe;
+      transition:width .3s"></div>
+  </div>
+
+
+</section>
 
 </body>
 </html>
