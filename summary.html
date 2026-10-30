@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home Summary</title>
+<style>
+  :root {
+    color-scheme: dark;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #111820;
+    color: #f5f7fa;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 20px; }
+  main { max-width: 820px; margin: 0 auto; }
+  header { display: flex; justify-content: space-between;
+    align-items: baseline; gap: 12px; margin-bottom: 28px; }
+  h1 { font-size: 30px; margin: 0; }
+  .muted { color: #9ba8b7; }
+  .eyebrow { font-size: 12px; font-weight: 650;
+    letter-spacing: .08em; color: #9ba8b7; }
+  .grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 14px; }
+  .card { background: #1d2732; border: 1px solid #ffffff18;
+    border-radius: 16px; padding: 24px; min-width: 0; }
+  .score { font-size: clamp(42px,7vw,76px); font-weight: 800;
+    letter-spacing: -.04em; line-height: 1.2; margin: 12px 0; }
+  .suffix { color: #fff; }
+  .total { font-size: clamp(32px,5vw,54px); font-weight: 750;
+    letter-spacing: -.035em; margin: 12px 0; }
+  .unit { font-size: 18px; font-weight: 400; color: #9ba8b7; }
+  .detail { color: #9ba8b7; font-size: 13px; min-height: 18px; }
+  footer { margin-top: 26px; display: flex;
+    justify-content: space-between; gap: 12px; font-size: 13px; }
+  a { color: #8bbcff; }
+  @media (max-width: 520px) {
+    body { padding: 22px 14px; }
+    .grid { gap: 10px; }
+    .card { padding: 16px; }
+    .eyebrow { font-size: 10px; }
+    .score { font-size: clamp(32px,8vw,48px); }
+    .total { font-size: clamp(26px,7vw,40px); }
+    .unit { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Home Summary</h1>
+    <span class="muted">LAST 24 HOURS</span>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <div class="eyebrow">WATER EFFICIENCY</div>
+      <div class="score">
+        <span id="water-score">—</span><span class="suffix"> / 100</span>
+      </div>
+      <div class="detail" id="water-status">Provisional</div>
+    </section>
+
+    <section class="card">
+      <div class="eyebrow">ELECTRICITY EFFICIENCY</div>
+      <div class="score">
+        <span id="electric-score">—</span><span class="suffix"> / 100</span>
+      </div>
+      <div class="detail" id="electric-status">Provisional</div>
+    </section>
+
+    <section class="card">
+      <div class="eyebrow">WATER USED</div>
+      <div class="total"><span id="water-total">—</span>
+        <span class="unit">gal</span></div>
+      <div class="detail">Last 24 completed hours</div>
+    </section>
+
+    <section class="card">
+      <div class="eyebrow">HOME ELECTRICITY</div>
+      <div class="total"><span id="electric-total">—</span>
+        <span class="unit">kWh</span></div>
+      <div class="detail">Gross consumption · Last 24h</div>
+    </section>
+  </div>
+
+  <footer>
+    <span class="muted" id="updated">Loading…</span>
+    <a href="index.html">Full dashboard</a>
+  </footer>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function score(value, anchors) {
+  if (value <= anchors[0][0]) return 100;
+  if (value >= anchors[anchors.length - 1][0]) return 0;
+  for (let i = 1; i < anchors.length; i++) {
+    if (value <= anchors[i][0]) {
+      const [x1,y1] = anchors[i-1];
+      const [x2,y2] = anchors[i];
+      return Math.round(y1 + (value-x1)*(y2-y1)/(x2-x1));
+    }
+  }
+  return 0;
+}
+
+function setScore(id, value) {
+  $(id).textContent = value;
+  $(id).style.color = `hsl(${value*1.2},75%,45%)`;
+}
+
+async function json(filename) {
+  const response = await fetch(filename + "?t=" + Date.now(), {
+    cache: "no-store"
+  });
+  if (!response.ok) throw Error("Data unavailable");
+  return response.json();
+}
+
+async function electricity() {
+  try {
+    const data = await json("current.json");
+    const period = data.last_24h || {};
+    const value = period.home_consumption_kwh;
+    const start = Date.parse(period.start);
+    const end = Date.parse(period.end);
+
+    if (period.status !== "complete" ||
+        !Number.isFinite(value) || value < 0 ||
+        !Number.isFinite(start) || !Number.isFinite(end) ||
+        Math.abs(end-start-86400000) > 60000 ||
+        end > Date.now()+60000 ||
+        Date.now()-end > 7200000) {
+      throw Error("Incomplete 24-hour data");
+    }
+
+    $("electric-total").textContent = value.toFixed(1);
+    setScore("electric-score",
+      score(value, [[10,100],[25,50],[50,0]]));
+    $("electric-status").textContent = "Provisional";
+  } catch (e) {
+    $("electric-total").textContent = "—";
+    $("electric-score").textContent = "—";
+    $("electric-score").style.color = "";
+    $("electric-status").textContent = e.message;
+  }
+}
+
+const pacificFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Los_Angeles",
+  year: "numeric", month: "2-digit", day: "2-digit",
+  hour: "2-digit", hourCycle: "h23"
+});
+
+function pacificHour(timestamp) {
+  const parts = Object.fromEntries(
+    pacificFormatter.formatToParts(new Date(timestamp))
+      .filter(p => p.type !== "literal")
+      .map(p => [p.type, p.value])
+  );
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:00:00`;
+}
+
+async function water() {
+  try {
+    const data = await json("water.json");
+    if (!Array.isArray(data.hourly)) throw Error("Water unavailable");
+
+    const end = Math.floor(Date.now()/3600000)*3600000;
+    const expected = Array.from({length:24}, (_,i) =>
+      pacificHour(end-(24-i)*3600000));
+
+    // Duplicate local hour labels during the fall DST transition
+    // cannot be distinguished in the current Flume format.
+    if (new Set(expected).size !== 24)
+      throw Error("DST hour ambiguity");
+
+    const readings = new Map();
+    for (const item of data.hourly) {
+      if (readings.has(item.time))
+        throw Error("Duplicate water hour");
+      if (typeof item.time !== "string" ||
+          typeof item.gallons !== "number" ||
+          !Number.isFinite(item.gallons) || item.gallons < 0)
+        continue;
+      readings.set(item.time, item.gallons);
+    }
+
+    if (expected.some(hour => !readings.has(hour)))
+      throw Error("Incomplete 24-hour data");
+
+    const gallons = expected.reduce(
+      (sum, hour) => sum + readings.get(hour), 0);
+
+    $("water-total").textContent = gallons.toFixed(1);
+    setScore("water-score",
+      score(gallons, [[75,100],[200,50],[400,0]]));
+    $("water-status").textContent = "Provisional";
+  } catch (e) {
+    $("water-total").textContent = "—";
+    $("water-score").textContent = "—";
+    $("water-score").style.color = "";
+    $("water-status").textContent = e.message;
+  }
+}
+
+async function refresh() {
+  await Promise.all([electricity(), water()]);
+  $("updated").textContent =
+    "Updated " + new Date().toLocaleTimeString([], {
+      hour: "numeric", minute: "2-digit"
+    });
+}
+
+refresh();
+setInterval(refresh, 300000);
+</script>
+</body>
+</html>
