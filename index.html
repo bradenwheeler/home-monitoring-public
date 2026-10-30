@@ -167,12 +167,12 @@ footer { margin-top: 28px; color: #98a2b3;
               gap:14px;margin-top:20px">
     <div style="padding:16px;border:1px solid #8883;border-radius:12px">
       <div style="font-size:13px;opacity:.7">Water score</div>
-      <div id="water-efficiency-score" style="font-size:24px;font-weight:700">Calculating…</div>
+      <div id="water-efficiency-score" style="font-size:clamp(48px,6vw,76px);font-weight:800;line-height:1.15;letter-spacing:-2px">Calculating…</div>
       <small id="water-efficiency-detail">Provisional · Rolling 24h</small>
     </div>
     <div style="padding:16px;border:1px solid #8883;border-radius:12px">
       <div style="font-size:13px;opacity:.7">Electricity score</div>
-      <div id="electricity-efficiency-score" style="font-size:24px;font-weight:700">Calculating…</div>
+      <div id="electricity-efficiency-score" style="font-size:clamp(48px,6vw,76px);font-weight:800;line-height:1.15;letter-spacing:-2px">Calculating…</div>
       <small id="electricity-efficiency-detail">Provisional · Rolling 24h</small>
     </div>
   </div>
@@ -825,6 +825,13 @@ function calculateEfficiency(value, thresholds) {
   return 0;
 }
 
+
+function efficiencyScoreColor(score) {
+  // 0 = red, 50 = yellow, 100 = green
+  const hue = Math.max(0, Math.min(100, score)) * 1.2;
+  return `hsl(${hue}, 75%, 45%)`;
+}
+
 async function updateEfficiencyScores() {
   try {
     const electricity = await fetch("current.json?t=" + Date.now())
@@ -844,6 +851,10 @@ async function updateEfficiencyScores() {
 
     document.getElementById("electricity-efficiency-score").textContent =
       calculateEfficiency(value, EFFICIENCY_THRESHOLDS.electricity) + " / 100";
+    const electricityScore = document.getElementById("electricity-efficiency-score");
+    electricityScore.style.color =
+      efficiencyScoreColor(parseInt(electricityScore.textContent, 10));
+
     document.getElementById("electricity-efficiency-detail").textContent =
       value.toFixed(1) + " kWh · Provisional";
   } catch (e) {
@@ -907,6 +918,10 @@ async function updateEfficiencyScores() {
 
     document.getElementById("water-efficiency-score").textContent =
       calculateEfficiency(gallons, EFFICIENCY_THRESHOLDS.water) + " / 100";
+    const waterScore = document.getElementById("water-efficiency-score");
+    waterScore.style.color =
+      efficiencyScoreColor(parseInt(waterScore.textContent, 10));
+
     document.getElementById("water-efficiency-detail").textContent =
       gallons.toFixed(1) + " gal · Provisional";
   } catch (e) {
