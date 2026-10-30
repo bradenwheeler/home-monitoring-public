@@ -159,8 +159,8 @@ footer { margin-top: 28px; color: #98a2b3;
   color:var(--text, #f5f7fa);
 ">
   <div style="font-size:13px;opacity:.7">HOME EFFICIENCY</div>
-  <h2 style="margin:8px 0">Building baseline</h2>
-  <p style="opacity:.7">Collecting 7 days of water and electricity usage.</p>
+  <h2 style="margin:8px 0">Home efficiency · Last 24 hours</h2>
+  <p style="opacity:.7">Provisional scores while we build your personalized baseline.</p>
 
   <div style="display:flex;justify-content:space-between;
               font-size:13px;margin:20px 0 8px">
@@ -180,13 +180,13 @@ footer { margin-top: 28px; color: #98a2b3;
               gap:14px;margin-top:20px">
     <div style="padding:16px;border:1px solid #8883;border-radius:12px">
       <div style="font-size:13px;opacity:.7">Water score</div>
-      <div style="font-size:24px;font-weight:700">Pending</div>
-      <small>Collecting daily gallons</small>
+      <div id="water-efficiency-score" style="font-size:24px;font-weight:700">Calculating…</div>
+      <small id="water-efficiency-detail">Provisional · Rolling 24h</small>
     </div>
     <div style="padding:16px;border:1px solid #8883;border-radius:12px">
       <div style="font-size:13px;opacity:.7">Electricity score</div>
-      <div style="font-size:24px;font-weight:700">Pending</div>
-      <small>Collecting daily kWh</small>
+      <div id="electricity-efficiency-score" style="font-size:24px;font-weight:700">Calculating…</div>
+      <small id="electricity-efficiency-detail">Provisional · Rolling 24h</small>
     </div>
   </div>
 </section>
@@ -814,6 +814,122 @@ async function updateBaselineProgress() {
 }
 updateBaselineProgress();
 setInterval(updateBaselineProgress, 3600000);
+</script>
+
+
+<script>
+const EFFICIENCY_THRESHOLDS = {
+  water: [[75, 100], [200, 50], [400, 0]],
+  electricity: [[10, 100], [25, 50], [50, 0]]
+};
+
+function calculateEfficiency(value, thresholds) {
+  if (value <= thresholds[0][0]) return 100;
+  if (value >= thresholds[2][0]) return 0;
+
+  for (let i = 0; i < thresholds.length - 1; i++) {
+    const [x1, y1] = thresholds[i];
+    const [x2, y2] = thresholds[i + 1];
+
+    if (value <= x2) {
+      return Math.round(y1 + (value - x1) * (y2 - y1) / (x2 - x1));
+    }
+  }
+  return 0;
+}
+
+async function updateEfficiencyScores() {
+  try {
+    const electricity = await fetch("current.json?t=" + Date.now())
+      .then(r => { if (!r.ok) throw Error("Electricity unavailable"); return r.json(); });
+
+    const value = electricity.last_24h?.home_consumption_kwh;
+    const start = Date.parse(electricity.last_24h?.start);
+    const end = Date.parse(electricity.last_24h?.end);
+    const valid = electricity.last_24h?.status === "complete" &&
+      Number.isFinite(value) && value >= 0 &&
+      Number.isFinite(start) && Number.isFinite(end) &&
+      Math.abs(end - start - 86400000) < 60000 &&
+      end <= Date.now() + 60000 &&
+      Date.now() - end < 7200000;
+
+    if (!valid) throw Error("Incomplete electricity data");
+
+    document.getElementById("electricity-efficiency-score").textContent =
+      calculateEfficiency(value, EFFICIENCY_THRESHOLDS.electricity) + " / 100";
+    document.getElementById("electricity-efficiency-detail").textContent =
+      value.toFixed(1) + " kWh · Provisional";
+  } catch (e) {
+    document.getElementById("electricity-efficiency-score").textContent = "—";
+    document.getElementById("electricity-efficiency-detail").textContent = e.message;
+  }
+
+  try {
+    const water = await fetch("water.json?t=" + Date.now())
+      .then(r => { if (!r.ok) throw Error("Water unavailable"); return r.json(); });
+
+    const hourly = water.hourly;
+    if (!Array.isArray(hourly) || hourly.length < 24) {
+      throw Error("Incomplete water data");
+    }
+
+    // Flume publishes Pacific local timestamps without UTC offsets.
+    // Compare local hour labels, avoiding a fixed UTC offset.
+    const hourFormatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Los_Angeles",
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", hourCycle: "h23"
+    });
+
+    function pacificHour(date) {
+      const parts = Object.fromEntries(
+        hourFormatter.formatToParts(date)
+          .filter(p => p.type !== "literal")
+          .map(p => [p.type, p.value])
+      );
+      return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:00:00`;
+    }
+
+    const now = Date.now();
+    const end = Math.floor(now / 3600000) * 3600000;
+    const expected = Array.from({length: 24}, (_, i) =>
+      pacificHour(new Date(end - (24 - i) * 3600000))
+    );
+
+    const readings = new Map();
+    for (const p of hourly) {
+      if (typeof p.time !== "string" ||
+          !Number.isFinite(Number(p.gallons)) ||
+          Number(p.gallons) < 0) continue;
+
+      if (readings.has(p.time)) {
+        throw Error("Duplicate water hour");
+      }
+      readings.set(p.time, Number(p.gallons));
+    }
+
+    if (expected.some(hour => !readings.has(hour)) ||
+        new Set(expected).size !== 24) {
+      throw Error("Incomplete 24-hour water data");
+    }
+
+    const gallons = expected.reduce(
+      (sum, hour) => sum + readings.get(hour), 0
+    );
+
+
+    document.getElementById("water-efficiency-score").textContent =
+      calculateEfficiency(gallons, EFFICIENCY_THRESHOLDS.water) + " / 100";
+    document.getElementById("water-efficiency-detail").textContent =
+      gallons.toFixed(1) + " gal · Provisional";
+  } catch (e) {
+    document.getElementById("water-efficiency-score").textContent = "—";
+    document.getElementById("water-efficiency-detail").textContent = e.message;
+  }
+}
+
+updateEfficiencyScores();
+setInterval(updateEfficiencyScores, 300000);
 </script>
 
 </body>
