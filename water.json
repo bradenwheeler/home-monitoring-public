@@ -1,15 +1,11 @@
 {
   "device_id": "7318097598448000471",
-  "published_at": "2026-11-04T10:59:03.670256-08:00",
+  "published_at": "2026-11-04T11:04:03.055587-08:00",
   "timezone": "America/Los_Angeles",
   "units": "gallons",
   "date": "2026-11-04",
-  "today_gallons": 8.13,
+  "today_gallons": 10.88,
   "hourly": [
-    {
-      "time": "2026-11-03 10:00:00",
-      "gallons": 0.94
-    },
     {
       "time": "2026-11-03 11:00:00",
       "gallons": 1.2
@@ -104,7 +100,11 @@
     },
     {
       "time": "2026-11-04 10:00:00",
-      "gallons": 0.09
+      "gallons": 1.7
+    },
+    {
+      "time": "2026-11-04 11:00:00",
+      "gallons": 1.13
     }
   ]
 }
