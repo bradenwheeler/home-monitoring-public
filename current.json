@@ -3,51 +3,51 @@
   "device_gid": 466964,
   "timezone": "America/Los_Angeles",
   "interval_minutes": 5,
-  "measurement_start": "2026-11-08T14:51:00-08:00",
-  "measurement_end": "2026-11-08T14:56:00-08:00",
-  "published_at": "2026-11-08T14:57:09.690957-08:00",
+  "measurement_start": "2026-11-08T14:56:00-08:00",
+  "measurement_end": "2026-11-08T15:01:00-08:00",
+  "published_at": "2026-11-08T15:02:09.132504-08:00",
   "unit": "W",
   "channels": {
     "97": {
       "name": "AC",
-      "watts": 2829.67,
-      "interval_kwh": 0.235806
+      "watts": 0.0,
+      "interval_kwh": 0.0
     },
     "98": {
       "name": "solar",
-      "watts": -2706.63,
-      "interval_kwh": -0.225553
+      "watts": -2697.34,
+      "interval_kwh": -0.224778
     },
     "99": {
       "name": "EV",
-      "watts": 4306.58,
-      "interval_kwh": 0.358882
+      "watts": 7630.12,
+      "interval_kwh": 0.635843
     },
     "100": {
       "name": "Zone A",
-      "watts": 810.16,
-      "interval_kwh": 0.067513
+      "watts": 167.84,
+      "interval_kwh": 0.013986
     },
     "101": {
       "name": "Zone B",
-      "watts": 565.01,
-      "interval_kwh": 0.047084
+      "watts": 872.93,
+      "interval_kwh": 0.072744
     }
   },
   "grid": {
     "interval_minutes": 1,
-    "measured_at": "2026-11-08T14:57:08.848218-08:00",
-    "net_grid_watts": 5660.93,
-    "solar_generation_watts": 2739.56,
-    "home_consumption_watts": 8400.49,
+    "measured_at": "2026-11-08T15:02:08.346143-08:00",
+    "net_grid_watts": 6141.21,
+    "solar_generation_watts": 2626.95,
+    "home_consumption_watts": 8768.15,
     "status": "importing"
   },
   "last_24h": {
-    "start": "2026-11-07T13:00:00-08:00",
-    "end": "2026-11-08T13:00:00-08:00",
-    "home_consumption_kwh": 20.913,
-    "solar_generation_kwh": 32.647,
-    "net_grid_kwh": -11.734,
+    "start": "2026-11-07T14:00:00-08:00",
+    "end": "2026-11-08T14:00:00-08:00",
+    "home_consumption_kwh": 20.882,
+    "solar_generation_kwh": 32.52,
+    "net_grid_kwh": -11.637,
     "status": "complete"
   }
 }
