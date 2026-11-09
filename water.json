@@ -1,10 +1,10 @@
 {
   "device_id": "7318097598448000471",
-  "published_at": "2026-11-09T03:04:03.026511-08:00",
+  "published_at": "2026-11-09T03:09:03.303704-08:00",
   "timezone": "America/Los_Angeles",
   "units": "gallons",
   "date": "2026-11-09",
-  "today_gallons": 0.0,
+  "today_gallons": 0.03,
   "hourly": [
     {
       "time": "2026-11-08 03:00:00",
@@ -104,7 +104,7 @@
     },
     {
       "time": "2026-11-09 03:00:00",
-      "gallons": 0.0
+      "gallons": 0.03
     }
   ]
 }
