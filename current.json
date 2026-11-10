@@ -3,9 +3,9 @@
   "device_gid": 466964,
   "timezone": "America/Los_Angeles",
   "interval_minutes": 5,
-  "measurement_start": "2026-11-10T14:21:00-08:00",
-  "measurement_end": "2026-11-10T14:26:00-08:00",
-  "published_at": "2026-11-10T14:27:08.719992-08:00",
+  "measurement_start": "2026-11-10T14:26:00-08:00",
+  "measurement_end": "2026-11-10T14:31:00-08:00",
+  "published_at": "2026-11-10T14:32:08.803759-08:00",
   "unit": "W",
   "channels": {
     "97": {
@@ -15,8 +15,8 @@
     },
     "98": {
       "name": "solar",
-      "watts": -3246.36,
-      "interval_kwh": -0.27053
+      "watts": -3117.93,
+      "interval_kwh": -0.259827
     },
     "99": {
       "name": "EV",
@@ -25,21 +25,21 @@
     },
     "100": {
       "name": "Zone A",
-      "watts": 271.16,
-      "interval_kwh": 0.022597
+      "watts": 256.52,
+      "interval_kwh": 0.021376
     },
     "101": {
       "name": "Zone B",
-      "watts": 553.84,
-      "interval_kwh": 0.046153
+      "watts": 547.67,
+      "interval_kwh": 0.045639
     }
   },
   "grid": {
     "interval_minutes": 1,
-    "measured_at": "2026-11-10T14:27:07.873780-08:00",
-    "net_grid_watts": -2372.84,
-    "solar_generation_watts": 3166.72,
-    "home_consumption_watts": 793.88,
+    "measured_at": "2026-11-10T14:32:08.022571-08:00",
+    "net_grid_watts": -2267.06,
+    "solar_generation_watts": 3067.4,
+    "home_consumption_watts": 800.33,
     "status": "exporting"
   },
   "last_24h": {
