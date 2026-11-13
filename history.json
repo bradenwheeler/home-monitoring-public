@@ -1,11 +1,5 @@
 [
   {
-    "time": "2026-11-06T04:21:00-08:00",
-    "net_grid_watts": 452.57,
-    "solar_watts": -0.0,
-    "home_watts": 452.57
-  },
-  {
     "time": "2026-11-06T04:26:00-08:00",
     "net_grid_watts": 403.4,
     "solar_watts": -0.0,
@@ -11692,5 +11686,11 @@
     "net_grid_watts": 501.9,
     "solar_watts": -0.0,
     "home_watts": 501.9
+  },
+  {
+    "time": "2026-11-13T04:21:00-08:00",
+    "net_grid_watts": 503.61,
+    "solar_watts": -0.0,
+    "home_watts": 503.61
   }
 ]
